@@ -1,0 +1,194 @@
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
+// Class representing an individual Quiz Question
+class Question {
+    private final String questionText;
+    private final String[] options;
+    private final int correctOptionIndex; // 1-based index (e.g., 1 for A, 2 for B)
+
+    public Question(String questionText, String[] options, int correctOptionIndex) {
+        this.questionText = questionText;
+        this.options = options;
+        this.correctOptionIndex = correctOptionIndex;
+    }
+
+    public String getQuestionText() {
+        return questionText;
+    }
+
+    public String[] getOptions() {
+        return options;
+    }
+
+    public int getCorrectOptionIndex() {
+        return correctOptionIndex;
+    }
+}
+
+// Class to store user summary results
+class QuestionResult {
+    private final String questionText;
+    private final String selectedOption;
+    private final String correctOption;
+    private final boolean isCorrect;
+    private final boolean timedOut;
+
+    public QuestionResult(String questionText, String selectedOption, String correctOption, boolean isCorrect, boolean timedOut) {
+        this.questionText = questionText;
+        this.selectedOption = selectedOption;
+        this.correctOption = correctOption;
+        this.isCorrect = isCorrect;
+        this.timedOut = timedOut;
+    }
+
+    public String getQuestionText() {
+        return questionText;
+    }
+
+    public String getSelectedOption() {
+        return selectedOption;
+    }
+
+    public String getCorrectOption() {
+        return correctOption;
+    }
+
+    public boolean isCorrect() {
+        return isCorrect;
+    }
+
+    public boolean isTimedOut() {
+        return timedOut;
+    }
+}
+
+public class QuizApplication {
+    private static final int TIME_LIMIT_SECONDS = 10;
+    private static final List<Question> quizList = new ArrayList<>();
+    private static final List<QuestionResult> summaryList = new ArrayList<>();
+    private static int score = 0;
+
+    public static void main(String[] args) {
+        loadQuestions();
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("=========================================");
+        System.out.println("         WELCOME TO THE QUIZ!            ");
+        System.out.println("=========================================");
+        System.out.println("Rules:");
+        System.out.println("1. You have " + TIME_LIMIT_SECONDS + " seconds per question.");
+        System.out.println("2. Enter option numbers (1-4) and press ENTER to submit.");
+        System.out.println("Press ENTER to start...");
+        scanner.nextLine();
+
+        for (int i = 0; i < quizList.size(); i++) {
+            Question q = quizList.get(i);
+            System.out.println("\n-----------------------------------------");
+            System.out.println("Question " + (i + 1) + "/" + quizList.size() + ": " + q.getQuestionText());
+            String[] opts = q.getOptions();
+            for (int j = 0; j < opts.length; j++) {
+                System.out.println((j + 1) + ". " + opts[j]);
+            }
+
+            long startTime = System.currentTimeMillis();
+            System.out.print("\nYour choice (1-4) [You have " + TIME_LIMIT_SECONDS + "s]: ");
+
+            int userChoice = -1;
+            boolean timedOut = false;
+
+            // Simple non-blocking timed input check
+            while ((System.currentTimeMillis() - startTime) < (TIME_LIMIT_SECONDS * 1000L)) {
+                try {
+                    if (System.in.available() > 0) {
+                        if (scanner.hasNextInt()) {
+                            userChoice = scanner.nextInt();
+                            break;
+                        } else {
+                            scanner.next(); // Clear non-integer tokens
+                            System.out.print("Invalid input! Enter a number (1-4): ");
+                        }
+                    }
+                    Thread.sleep(100); // Polling delay
+                } catch (Exception e) {
+                    break;
+                }
+            }
+
+            long timeTaken = (System.currentTimeMillis() - startTime) / 1000;
+
+            if (userChoice == -1 && timeTaken >= TIME_LIMIT_SECONDS) {
+                timedOut = true;
+                System.out.println("\n⏰ TIME'S UP!");
+            }
+
+            // Evaluate answer
+            boolean isCorrect = false;
+            String userSelectedStr = (timedOut || userChoice < 1 || userChoice > 4) 
+                    ? (timedOut ? "Timed Out" : "Invalid Selection") 
+                    : opts[userChoice - 1];
+            
+            String correctStr = opts[q.getCorrectOptionIndex() - 1];
+
+            if (!timedOut && userChoice == q.getCorrectOptionIndex()) {
+                isCorrect = true;
+                score++;
+                System.out.println("✅ Correct!");
+            } else if (!timedOut) {
+                System.out.println("❌ Incorrect!");
+            }
+
+            summaryList.add(new QuestionResult(q.getQuestionText(), userSelectedStr, correctStr, isCorrect, timedOut));
+        }
+
+        displayResultScreen();
+        scanner.close();
+    }
+
+    private static void loadQuestions() {
+        quizList.add(new Question(
+                "Which programming language is known as 'Write Once, Run Anywhere'?",
+                new String[]{"C++", "Python", "Java", "JavaScript"},
+                3
+        ));
+
+        quizList.add(new Question(
+                "What is the time complexity of searching an element in a balanced Binary Search Tree?",
+                new String[]{"O(1)", "O(n)", "O(n log n)", "O(log n)"},
+                4
+        ));
+
+        quizList.add(new Question(
+                "Which keyword in Java is used to inherit a class?",
+                new String[]{"implements", "extends", "inherits", "instanceof"},
+                2
+        ));
+
+        quizList.add(new Question(
+                "What does OOP stand for?",
+                new String[]{"Object-Oriented Programming", "Objective Operating Process", "Order Of Operations", "Open Office Protocol"},
+                1
+        ));
+    }
+
+    private static void displayResultScreen() {
+        System.out.println("\n=========================================");
+        System.out.println("             QUIZ RESULTS                ");
+        System.out.println("=========================================");
+        System.out.println("Final Score: " + score + " / " + quizList.size());
+        double percentage = ((double) score / quizList.size()) * 100;
+        System.out.printf("Accuracy Percentage: %.1f%%\n\n", percentage);
+
+        System.out.println("--- Summary Breakdown ---");
+        for (int i = 0; i < summaryList.size(); i++) {
+            QuestionResult res = summaryList.get(i);
+            String status = res.isCorrect() ? "[CORRECT]" : (res.isTimedOut() ? "[TIMED OUT]" : "[WRONG]");
+            
+            System.out.println((i + 1) + ". " + res.getQuestionText() + " " + status);
+            System.out.println("   Your Answer   : " + res.getSelectedOption());
+            System.out.println("   Correct Answer: " + res.getCorrectOption());
+            System.out.println();
+        }
+    }
+}
