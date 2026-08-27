@@ -1,0 +1,84 @@
+import java.util.Scanner;
+
+public class StudentGradeCalculator {
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("=== Student Grade Calculator ===");
+        
+        // 1. Input number of subjects
+        System.out.print("Enter the number of subjects: ");
+        int numSubjects = getValidInteger(scanner);
+
+        while (numSubjects <= 0) {
+            System.out.print("Please enter a positive number of subjects: ");
+            numSubjects = getValidInteger(scanner);
+        }
+
+        double totalMarks = 0;
+
+        // 2. Input marks for each subject (out of 100)
+        for (int i = 1; i <= numSubjects; i++) {
+            System.out.print("Enter marks for Subject " + i + " (0-100): ");
+            double marks = getValidMarks(scanner);
+            totalMarks += marks;
+        }
+
+        // 3. Calculate Average Percentage
+        double averagePercentage = totalMarks / numSubjects;
+
+        // 4. Calculate Grade
+        String grade;
+        if (averagePercentage >= 90) {
+            grade = "A+";
+        } else if (averagePercentage >= 80) {
+            grade = "A";
+        } else if (averagePercentage >= 70) {
+            grade = "B";
+        } else if (averagePercentage >= 60) {
+            grade = "C";
+        } else if (averagePercentage >= 50) {
+            grade = "D";
+        } else {
+            grade = "F (Fail)";
+        }
+
+        // 5. Display Results
+        System.out.println("\n=================================");
+        System.out.println("          RESULTS SUMMARY        ");
+        System.out.println("=================================");
+        System.out.printf("Total Marks Obtained : %.2f / %d\n", totalMarks, numSubjects * 100);
+        System.out.printf("Average Percentage   : %.2f%%\n", averagePercentage);
+        System.out.println("Grade Assigned       : " + grade);
+        System.out.println("=================================");
+
+        scanner.close();
+    }
+
+    // Helper method to ensure non-negative integer input
+    private static int getValidInteger(Scanner scanner) {
+        while (!scanner.hasNextInt()) {
+            System.out.print("Invalid input! Please enter a valid number: ");
+            scanner.next();
+        }
+        return scanner.nextInt();
+    }
+
+    // Helper method to ensure marks are between 0 and 100
+    private static double getValidMarks(Scanner scanner) {
+        double marks = -1;
+        while (true) {
+            if (scanner.hasNextDouble()) {
+                marks = scanner.getAsDouble();
+                if (marks >= 0 && marks <= 100) {
+                    break;
+                }
+            } else {
+                scanner.next(); // Clear non-double input
+            }
+            System.out.print("Invalid marks! Enter a value between 0 and 100: ");
+        }
+        return marks;
+    }
+}
